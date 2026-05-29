@@ -1617,6 +1617,8 @@ export const en = {
   'tabs.openTerminal': 'Open Terminal',
   'tabs.showWorkspace': 'Show Workspace',
   'tabs.hideWorkspace': 'Hide Workspace',
+  'tabs.showBrowser': 'Show Browser',
+  'tabs.hideBrowser': 'Hide Browser',
 } as const
 
 export type TranslationKey = keyof typeof en

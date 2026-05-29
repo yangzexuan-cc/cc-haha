@@ -12,6 +12,7 @@ import { useChatStore } from '../stores/chatStore'
 import { useCLITaskStore } from '../stores/cliTaskStore'
 import { useTeamStore } from '../stores/teamStore'
 import { useWorkspacePanelStore } from '../stores/workspacePanelStore'
+import { useBrowserPanelStore } from '../stores/browserPanelStore'
 import {
   TERMINAL_PANEL_DEFAULT_HEIGHT,
   TERMINAL_PANEL_MAX_HEIGHT,
@@ -24,6 +25,7 @@ import { ChatInput } from '../components/chat/ChatInput'
 import { ComputerUsePermissionModal } from '../components/chat/ComputerUsePermissionModal'
 import { SessionTaskBar } from '../components/chat/SessionTaskBar'
 import { WorkspacePanel } from '../components/workspace/WorkspacePanel'
+import { BrowserSurface } from '../components/browser/BrowserSurface'
 import { TeamStatusBar } from '../components/teams/TeamStatusBar'
 import { TerminalSettings } from './TerminalSettings'
 import type { SessionListItem } from '../types/session'
@@ -281,6 +283,13 @@ export function ActiveSession() {
       ? state.isPanelOpen(activeTabId)
       : false,
   )
+  const showBrowserPanel = useBrowserPanelStore((state) =>
+    activeTabId && isSessionTabState(activeTabId, activeTabType) && !isMemberSession && !isMobileLayout
+      ? Boolean(state.bySession[activeTabId]?.isOpen)
+      : false,
+  )
+  const showRightPanel = showWorkspacePanel || showBrowserPanel
+  const rightPanelWidth = useWorkspacePanelStore((state) => state.width)
   const showTerminalPanel = useTerminalPanelStore((state) =>
     activeTabId && isSessionTabState(activeTabId, activeTabType) && !isMemberSession && !isMobileLayout
       ? state.isPanelOpen(activeTabId)
@@ -352,7 +361,7 @@ export function ActiveSession() {
       <div data-testid="active-session-content-row" className="flex min-h-0 min-w-0 flex-1">
         <div
           data-testid="active-session-chat-column"
-          className={`flex flex-col ${showWorkspacePanel ? CHAT_COLUMN_WITH_WORKSPACE_CLASS : isMobileLayout ? 'min-w-0 flex-1' : 'min-w-[360px] flex-1'}`}
+          className={`flex flex-col ${showRightPanel ? CHAT_COLUMN_WITH_WORKSPACE_CLASS : isMobileLayout ? 'min-w-0 flex-1' : 'min-w-[360px] flex-1'}`}
         >
           {isMemberSession && (
             <div className="shrink-0 border-b border-[var(--color-border)] bg-[var(--color-surface-container)]">
@@ -429,15 +438,15 @@ export function ActiveSession() {
               {!isMemberSession && !isMobileLayout && (
                 <div
                   className={
-                    showWorkspacePanel
+                    showRightPanel
                       ? 'flex w-full items-center border-b border-[var(--color-border)]/70 px-4 py-3'
                       : 'w-full border-b border-outline-variant/10 px-4 py-3'
                   }
                 >
-                  <div className={showWorkspacePanel ? 'min-w-0 flex-1' : 'mx-auto w-full max-w-[860px] min-w-0'}>
+                  <div className={showRightPanel ? 'min-w-0 flex-1' : 'mx-auto w-full max-w-[860px] min-w-0'}>
                     <h1
                       className={
-                        showWorkspacePanel
+                        showRightPanel
                           ? 'truncate text-[15px] font-bold font-headline leading-tight text-on-surface'
                           : 'text-lg font-bold font-headline text-on-surface leading-tight'
                       }
@@ -446,7 +455,7 @@ export function ActiveSession() {
                     </h1>
                     <div
                       className={
-                        showWorkspacePanel
+                        showRightPanel
                           ? 'mt-1 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[10px] font-medium text-outline'
                           : 'flex items-center gap-2 text-[10px] text-outline font-medium mt-1'
                       }
@@ -469,7 +478,7 @@ export function ActiveSession() {
                           <span className="truncate">{t('session.lastUpdated', { time: lastUpdated })}</span>
                         </>
                       )}
-                      {!showWorkspacePanel && visibleMessageCount > 0 && (
+                      {!showRightPanel && visibleMessageCount > 0 && (
                         <>
                           <span className="text-[var(--color-outline)]">·</span>
                           <span>{t('session.messages', { count: visibleMessageCount })}</span>
@@ -487,13 +496,13 @@ export function ActiveSession() {
                     <ActiveGoalStrip
                       goal={activeGoal}
                       isRunning={isActive}
-                      compact={showWorkspacePanel}
+                      compact={showRightPanel}
                     />
                   </div>
                 </div>
               )}
 
-              <MessageList compact={showWorkspacePanel} />
+              <MessageList compact={showRightPanel} />
             </>
           )}
 
@@ -502,8 +511,8 @@ export function ActiveSession() {
           <TeamStatusBar />
 
           <ChatInput
-            variant={isEmpty && !isMemberSession && !showWorkspacePanel ? 'hero' : 'default'}
-            compact={showWorkspacePanel}
+            variant={isEmpty && !isMemberSession && !showRightPanel ? 'hero' : 'default'}
+            compact={showRightPanel}
           />
 
           {terminalPanelRuntimeId && activeTabId ? (
@@ -534,7 +543,18 @@ export function ActiveSession() {
           ) : null}
         </div>
 
-        {showWorkspacePanel ? (
+        {showBrowserPanel ? (
+          <>
+            <WorkspaceResizeHandle />
+            <aside
+              data-testid="browser-panel"
+              className="flex h-full shrink-0 flex-col border-l border-[var(--color-border)] bg-[var(--color-surface)]"
+              style={{ width: rightPanelWidth, maxWidth: '62%', minWidth: 'min(420px, 54%)' }}
+            >
+              <BrowserSurface sessionId={activeTabId} />
+            </aside>
+          </>
+        ) : showWorkspacePanel ? (
           <>
             <WorkspaceResizeHandle />
             <WorkspacePanel sessionId={activeTabId} />

@@ -11,10 +11,11 @@ import { useChatStore } from '../../stores/chatStore'
 import { useSessionStore } from '../../stores/sessionStore'
 import { useWorkspacePanelStore } from '../../stores/workspacePanelStore'
 import { useTerminalPanelStore } from '../../stores/terminalPanelStore'
+import { useBrowserPanelStore } from '../../stores/browserPanelStore'
 import { useTranslation } from '../../i18n'
 import { WindowControls, showWindowControls } from './WindowControls'
 import { OpenProjectMenu } from './OpenProjectMenu'
-import { Folder, FolderOpen, SquareTerminal } from 'lucide-react'
+import { Folder, FolderOpen, Globe, SquareTerminal } from 'lucide-react'
 
 const TAB_WIDTH = 180
 const DRAG_START_THRESHOLD = 4
@@ -66,6 +67,9 @@ export function TabBar() {
   )
   const isTerminalPanelOpen = useTerminalPanelStore((state) =>
     activeTabId && isActiveSessionTab ? state.isPanelOpen(activeTabId) : false,
+  )
+  const isBrowserPanelOpen = useBrowserPanelStore((state) =>
+    activeTabId && isActiveSessionTab ? Boolean(state.bySession[activeTabId]?.isOpen) : false,
   )
 
   const moveTab = useTabStore((s) => s.moveTab)
@@ -386,6 +390,21 @@ export function TabBar() {
             label={t(isWorkspacePanelOpen ? 'tabs.hideWorkspace' : 'tabs.showWorkspace')}
             onClick={() => useWorkspacePanelStore.getState().togglePanel(activeTabId)}
             active={isWorkspacePanelOpen}
+          />
+        )}
+        {isActiveSessionTab && activeTabId && (
+          <ToolbarIconButton
+            icon={<Globe size={17} strokeWidth={1.9} />}
+            label={t(isBrowserPanelOpen ? 'tabs.hideBrowser' : 'tabs.showBrowser')}
+            onClick={() => {
+              const browser = useBrowserPanelStore.getState()
+              if (browser.bySession[activeTabId]?.isOpen) {
+                browser.close(activeTabId)
+              } else {
+                browser.open(activeTabId, 'http://localhost:5173/')
+              }
+            }}
+            active={isBrowserPanelOpen}
           />
         )}
       </div>

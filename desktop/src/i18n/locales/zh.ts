@@ -1619,4 +1619,6 @@ export const zh: Record<TranslationKey, string> = {
   'tabs.openTerminal': '打开终端',
   'tabs.showWorkspace': '显示工作区',
   'tabs.hideWorkspace': '隐藏工作区',
+  'tabs.showBrowser': '显示浏览器',
+  'tabs.hideBrowser': '隐藏浏览器',
 }
