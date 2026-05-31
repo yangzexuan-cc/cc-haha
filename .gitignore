@@ -83,4 +83,5 @@ CLAUDE.md
 graphify-out/
 
 # claude code 
-.specstory/tests/doc/
+.specstory/
+tests/doc/
