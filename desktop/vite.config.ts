@@ -35,13 +35,5 @@ export default defineConfig({
     watch: {
       ignored: ['**/src-tauri/**'],
     },
-    proxy: {
-      '/health': 'http://127.0.0.1:3456',
-      '/api': 'http://127.0.0.1:3456',
-      '/ws': {
-        target: 'ws://127.0.0.1:3456',
-        ws: true,
-      },
-    },
   },
 })
