@@ -22,7 +22,6 @@ const TAB_WIDTH = 180
 const DRAG_START_THRESHOLD = 4
 const desktopHost = getDesktopHost()
 const isDesktopRuntime = desktopHost.isDesktop
-const canStartWindowDragging = desktopHost.capabilities.windowControls
 
 type PendingCloseRequest = {
   tabs: Tab[]
@@ -92,7 +91,6 @@ export function TabBar() {
   const pendingDragRef = useRef<{ index: number; startX: number; startY: number } | null>(null)
   const suppressClickRef = useRef(false)
   const tabRefs = useRef(new Map<string, HTMLDivElement | null>())
-  const startDraggingRef = useRef<(() => Promise<void>) | null>(null)
   const t = useTranslation()
   const runningSessionIds = useMemo(() => {
     const ids = new Set<string>()
@@ -104,11 +102,6 @@ export function TabBar() {
     }
     return ids
   }, [activeChatSessionIds, tabs])
-
-  useEffect(() => {
-    if (!canStartWindowDragging) return
-    startDraggingRef.current = () => getDesktopHost().window.startDragging()
-  }, [])
 
   const updateScrollState = useCallback(() => {
     const el = scrollRef.current
@@ -326,16 +319,10 @@ export function TabBar() {
     setActiveTab(sessionId)
   }
 
-  const handleScrollRegionMouseDown = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.button !== 0 || event.target !== scrollRef.current) return
-    const startDragging = startDraggingRef.current
-    if (!startDragging) return
-    void startDragging().catch(() => {})
-  }, [])
-
   return (
     <div
       data-testid="tab-bar"
+      data-desktop-drag-region={isDesktopRuntime ? true : undefined}
       className="flex min-h-11 items-stretch bg-[var(--color-surface-container)] select-none border-b border-[var(--color-border)]"
     >
 
@@ -347,9 +334,10 @@ export function TabBar() {
 
       <div
         ref={scrollRef}
-        className="tab-bar-hit-area flex-1 flex items-stretch overflow-x-hidden"
+        data-testid="tab-bar-scroll-region"
+        data-desktop-drag-region={isDesktopRuntime ? true : undefined}
+        className="flex-1 flex items-stretch overflow-x-hidden"
         onDragOver={(e) => e.preventDefault()}
-        onMouseDown={handleScrollRegionMouseDown}
       >
         {tabs.map((tab, index) => (
           <TabItem
@@ -522,7 +510,7 @@ const TabItem = forwardRef<HTMLDivElement, {
       onMouseDown={onMouseDown}
       onContextMenu={onContextMenu}
       className={`
-        tab-bar-hit-area group relative flex min-h-11 flex-shrink-0 items-center gap-1.5 px-3
+        tab-bar-interactive group relative flex min-h-11 flex-shrink-0 items-center gap-1.5 px-3
         ${isDragging ? 'z-20 cursor-grabbing' : 'cursor-grab'}
         transition-[background-color,box-shadow,opacity,transform] duration-150 ease-out
         ${isActive
